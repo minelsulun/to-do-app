@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Simple To-Do</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f8;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            height: 100vh;
+        }
+        span{
+            cursor: pointer;
+            color: red;
+            font-weight: bold;
+            margin-left: 10px;
+            text-decoration: none !important; /* kesinlikle üstü çizilmesin */
+        }
+
+        .container {
+            margin-top: 50px;
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            width: 400px;
+        }
+
+        #addButton {
+            font-size: 20px;
+            font-weight: bold;
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background-color: #4c90af;
+            color: white;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+
+        li {
+            background-color: #f2f2f2;
+            margin: 10px 0;
+            padding: 12px 16px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+        }
+
+        li p.done {
+            text-decoration: line-through;
+            color: gray;
+        }
+
+        .task-input {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+        #error {
+            color: red;
+            font-size: 14px;
+            margin-top: 10px;
+            display: none;
+        }
+        #deleteButton {
+            background-color: #fefefe;
+            border-radius: 2px;
+            border: #4c90af solid 1px;
+            color: black;
+            cursor: pointer;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <input id="taskInput" class="task-input" placeholder="Yapılacak görevi giriniz">
+    <button id="addButton">+</button>
+    <ul id="list"></ul>
+    <p id="error"></p>
+</div>
+
+<script>
+    const list = document.getElementById('list');
+    const addButton = document.getElementById('addButton');
+    const taskInput = document.getElementById('taskInput');
+    const error = document.getElementById('error');
+
+
+    fetch('http://localhost:3000/mylist')
+        .then(res => {
+            if (res.status !== 200) {
+                console.log('fetch error', res);
+                return;
+            }
+            return res.json()
+        })
+        .then(json => {
+            json = json.data;
+            json.forEach(task => {
+                addTask(task);
+            });
+        });
+
+    addButton.addEventListener('click', () => {
+        const taskText = taskInput.value.trim();
+        error.style.display = 'none';
+
+        if (taskText) {
+            fetch('http://localhost:3000/mylist', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ text: taskText })
+            }).then(response => {
+                if(response.status === 201){
+                    response.json().then(data => {
+                        addTask(data);
+                    })
+                }else{
+                    error.innerText = response.statusText;
+                    error.style.display = 'block';
+                }
+            })
+
+        }
+    });
+
+    function changeTask(task,p){
+        task.done = !task.done;
+        fetch(`http://localhost:3000/mylist`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(task)
+        }).then(response => {
+            if (response.status === 200) {
+                p.classList.toggle("done");
+            } else {
+                console.error('Error updating task:', response.statusText);
+            }
+        });
+    }
+
+    function addTask(task) {
+        const p = document.createElement("p");
+        const button = document.createElement("button");
+        button.id = "deleteButton";
+        button.textContent = 'X';
+        const li = document.createElement("li");
+        li.id = task.id;
+        li.textContent = task.text;
+        if (task.done) {
+            li.classList.add("done");
+        }
+        li.appendChild(p);
+        li.appendChild(button);
+        list.appendChild(li);
+        taskInput.value = '';
+        li.addEventListener('click', () => {
+            changeTask(task, p);
+        });
+        button.addEventListener('click', (event) => {
+            event.stopPropagation(); // Prevent the click from bubbling up to the li
+            deleteTask(task);
+        });
+    }
+
+    function deleteTask(task) {
+        fetch(`http://localhost:3000/mylist/${task.id}`, {
+            method: 'DELETE'
+        }).then(response => {
+            if (response.status === 200) {
+                const li = document.getElementById(task.id);
+                li.remove();
+            } else {
+                error.textContent='Error deleting task:'+ response.statusText;
+            }
+        });
+    }
+</script>
+</body>
+</html>
