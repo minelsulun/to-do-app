@@ -102,8 +102,8 @@
 
 <div id="filter-buttons">
     <button id="all-btn">Tüm Görevler</button>
-    <button id="done-btn">Tamamlananlar</button>
-    <button id="undone-btn">Tamamlanmamışlar</button>
+    <button id="done-btn">DONE</button>
+    <button id="undone-btn">WAITING FOR YOU TO DOO</button>
 </div>
 
 <script>
@@ -111,29 +111,32 @@
     const addButton = document.getElementById('addButton');
     const taskInput = document.getElementById('taskInput');
     const error = document.getElementById('error');
+    const allTasks = await fetch('http://localhost:3000/mylist').then(res => res.json());
+    const doneTasks = allTasks.filter(task => task.done);
+    const undoneTasks = allTasks.filter(task => !task.done);
 
-    function filterTasks(filter) {
-        const allItems = Array.from(list.querySelectorAll("li"));
-
-        // Filtrele
-        const filtered = allItems.filter(li => {
-            const p = li.querySelector("p");
-            const isDone = p.classList.contains("done");
-
-            if (filter === "all") return true;
-            if (filter === "done") return isDone;
-            if (filter === "undone") return !isDone;
-        });
-
-        // Listeyi temizle
+    function clearTaskList() {
         list.innerHTML = "";
-
-        // Filtrelenmiş öğeleri tekrar ekle (yeni sırayla)
-        filtered.forEach(li => list.appendChild(li));
     }
-    document.getElementById("all-btn").addEventListener("click", () => filterTasks("all"));
-    document.getElementById("done-btn").addEventListener("click", () => filterTasks("done"));
-    document.getElementById("undone-btn").addEventListener("click", () => filterTasks("undone"));
+    function fetchAndDisplayTasks(endpoint) {
+        fetch(endpoint)
+            .then(res => res.json())
+            .then(tasks => {
+                clearTaskList();
+                tasks.forEach(task => addTask(task));
+            });
+    }
+    document.getElementById("all-btn").addEventListener("click", () => {
+        fetchAndDisplayTasks("/mylist");
+    });
+
+    document.getElementById("done-btn").addEventListener("click", () => {
+        fetchAndDisplayTasks("/mylist/done");
+    });
+
+    document.getElementById("undone-btn").addEventListener("click", () => {
+        fetchAndDisplayTasks("/mylist/undone");
+    });
 
     fetch('http://localhost:3000/mylist')
         .then(res => {

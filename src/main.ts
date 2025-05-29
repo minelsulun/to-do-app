@@ -89,3 +89,21 @@ function updateTask(task) {
     });
 }
 
+app.get('/mylist/done', (req, res) => {
+    let taskData = fs.readFileSync('./data.json', 'utf-8');
+    let tasks = JSON.parse(taskData);
+
+    const doneTasks: Task[] = tasks.data.filter((task: Task) => task.done === true);
+
+    res.json(doneTasks);
+});
+app.get('/mylist/undone', (req, res) => {
+    let taskData = fs.readFileSync('./data.json', 'utf-8');
+    let tasks = JSON.parse(taskData);
+
+    const undoneTasks: Task[] = tasks.data.filter((task: Task) => task.done === false);
+
+    res.json(undoneTasks);
+});
+
+
