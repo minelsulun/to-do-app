@@ -57,10 +57,14 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-
         }
 
-        li p.done {
+        li p {
+            margin: 0;
+            flex: 1;
+        }
+
+        p.done {
             text-decoration: line-through;
             color: gray;
         }
@@ -96,12 +100,40 @@
     <p id="error"></p>
 </div>
 
+<div id="filter-buttons">
+    <button id="all-btn">Tüm Görevler</button>
+    <button id="done-btn">Tamamlananlar</button>
+    <button id="undone-btn">Tamamlanmamışlar</button>
+</div>
+
 <script>
     const list = document.getElementById('list');
     const addButton = document.getElementById('addButton');
     const taskInput = document.getElementById('taskInput');
     const error = document.getElementById('error');
 
+    function filterTasks(filter) {
+        const allItems = Array.from(list.querySelectorAll("li"));
+
+        // Filtrele
+        const filtered = allItems.filter(li => {
+            const p = li.querySelector("p");
+            const isDone = p.classList.contains("done");
+
+            if (filter === "all") return true;
+            if (filter === "done") return isDone;
+            if (filter === "undone") return !isDone;
+        });
+
+        // Listeyi temizle
+        list.innerHTML = "";
+
+        // Filtrelenmiş öğeleri tekrar ekle (yeni sırayla)
+        filtered.forEach(li => list.appendChild(li));
+    }
+    document.getElementById("all-btn").addEventListener("click", () => filterTasks("all"));
+    document.getElementById("done-btn").addEventListener("click", () => filterTasks("done"));
+    document.getElementById("undone-btn").addEventListener("click", () => filterTasks("undone"));
 
     fetch('http://localhost:3000/mylist')
         .then(res => {
@@ -161,26 +193,73 @@
     }
 
     function addTask(task) {
-        const p = document.createElement("p");
-        const button = document.createElement("button");
-        button.id = "deleteButton";
-        button.textContent = 'X';
+        // <li> elementi oluşturuluyor ve görev id'si atanıyor
         const li = document.createElement("li");
         li.id = task.id;
-        li.textContent = task.text;
+
+        // <p> elementi görev metnini içeriyor
+        const p = document.createElement("p");
+        p.textContent = task.text;
+
+        // Eğer görev tamamlanmışsa "done" sınıfı ekleniyor (stil için)
         if (task.done) {
-            li.classList.add("done");
+            p.classList.add("done");
         }
+
+        // Paragraf tıklanabilir ve düzenlenebilir hale getiriliyor (başka fonksiyonla)
+        enableEdit(p, task);
+
+        // Silme butonu oluşturuluyor
+        const deleteButton = document.createElement("button");
+        deleteButton.classList.add("delete-button");
+        deleteButton.textContent = "X";
+
+        // <li> içine <p> ve buton yerleştiriliyor
         li.appendChild(p);
-        li.appendChild(button);
-        list.appendChild(li);
+        li.appendChild(deleteButton);
+        list.prepend(li);
+        // Input kutusu temizleniyor
         taskInput.value = '';
-        li.addEventListener('click', () => {
+
+        // Silme işlemi için butona tıklama eventi atanıyor
+        deleteButton.addEventListener("click", (event) => {
+            event.stopPropagation(); // <li> tıklamasını engeller
+            deleteTask(task);
+        });
+    }
+
+    function enableEdit(p, task) {
+        // Tek tıklama: Üstünü çizme
+        p.addEventListener('click', () => {
             changeTask(task, p);
         });
-        button.addEventListener('click', (event) => {
-            event.stopPropagation(); // Prevent the click from bubbling up to the li
-            deleteTask(task);
+
+        // Çift tıklama: Düzenleme
+        p.addEventListener('dblclick', () => {
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = task.text;
+            input.classList.add('edit-input');
+
+            p.replaceWith(input);
+            input.focus();
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    const newText = input.value.trim();
+                    if (newText !== '') {
+                        task.text = newText;
+
+                        const newP = document.createElement('p');
+                        newP.textContent = newText;
+                        if (task.done) newP.classList.add("done");
+
+                        input.replaceWith(newP);
+                        enableEdit(newP, task); // ✅ Yeni p’ye tıklama ve düzenleme ekle
+                        updateTask(task);
+                    }
+                }
+            });
         });
     }
 
@@ -196,6 +275,28 @@
             }
         });
     }
+
+    taskInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+            const taskText = taskInput.value.trim();
+            if (taskText !== '') {
+                fetch('http://localhost:3000/mylist', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ text: taskText })
+                })
+                    .then(response => response.json())
+                    .then(newTask => {
+                        addTask(newTask);
+                    });
+            }
+        }
+    });
+
+
+
 </script>
 </body>
 </html>

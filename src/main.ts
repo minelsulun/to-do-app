@@ -67,11 +67,9 @@ app.delete('/mylist/:id', (req, res) => {
     const taskData = fs.readFileSync('./data.json', 'utf-8');
     const tasks = JSON.parse(taskData);
 
-    const taskId = parseInt(req.params.id);
+    const taskId = parseInt(req.params.id); // taskId artık number
 
-    const index = tasks.data.findIndex(task => task.id == taskId);
-
-    if (index !== -1) {
+    const index = tasks.data.findIndex(task => task.id === taskId);    if (index !== -1) {
         const deletedTask = tasks.data.splice(index, 1)[0];
 
         fs.writeFileSync('./data.json', JSON.stringify(tasks, null, 2));
@@ -80,3 +78,14 @@ app.delete('/mylist/:id', (req, res) => {
         res.status(404).json({ message: 'Task not found' });
     }
 });
+
+function updateTask(task) {
+    fetch(`http://localhost:3000/mylist`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(task)
+    });
+}
+
