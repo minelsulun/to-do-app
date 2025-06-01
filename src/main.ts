@@ -86,24 +86,36 @@ function updateTask(task) {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify(task)
+    }).then(res => {
+        if (!res.ok) {
+            console.error("Görev güncellenemedi:", res.statusText);
+        }
     });
 }
-
 app.get('/mylist/done', (req, res) => {
     let taskData = fs.readFileSync('./data.json', 'utf-8');
     let tasks = JSON.parse(taskData);
 
+    console.log("📦 Tüm görevler:", tasks); // Tüm görevleri yaz
+
     const doneTasks: Task[] = tasks.data.filter((task: Task) => task.done === true);
 
-    res.json(doneTasks);
+    console.log("✅ Tamamlanan görevler:", doneTasks); // Filtrelenen görevleri yaz
+
+    res.json({ data: doneTasks }); // ✔ frontend ile uyumlu
 });
+
 app.get('/mylist/undone', (req, res) => {
     let taskData = fs.readFileSync('./data.json', 'utf-8');
     let tasks = JSON.parse(taskData);
 
+    console.log("📦 Tüm görevler:", tasks);
+
     const undoneTasks: Task[] = tasks.data.filter((task: Task) => task.done === false);
 
-    res.json(undoneTasks);
+    console.log("⏳ Tamamlanmamış görevler:", undoneTasks);
+
+    res.json({ data: undoneTasks }); // ✔ frontend ile uyumlu
 });
 
 
