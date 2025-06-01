@@ -10,10 +10,21 @@
             margin: 0;
             padding: 0;
             display: flex;
-            justify-content: center;
-            align-items: flex-start;
+            justify-content: center;  /* yatayda ortala */
+            align-items: flex-start;  /* üstten hizala */
             height: 100vh;
+            position: relative;
         }
+
+        .container {
+            margin-top: 95px; /* üstten biraz boşluk bırak */
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 400px;
+        }
+
         span{
             cursor: pointer;
             color: red;
@@ -22,14 +33,6 @@
             text-decoration: none !important; /* kesinlikle üstü çizilmesin */
         }
 
-        .container {
-            margin-top: 50px;
-            background-color: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            width: 400px;
-        }
 
         #addButton {
             font-size: 20px;
@@ -37,7 +40,7 @@
             padding: 10px 20px;
             cursor: pointer;
             border: none;
-            background-color: #4c90af;
+            background-color: #ff8da1;
             color: white;
             border-radius: 8px;
             margin-top: 10px;
@@ -62,12 +65,22 @@
         li p {
             margin: 0;
             flex: 1;
+            cursor: pointer;
+            transition: background-color 0.2s ease, color 0.2s ease;
         }
+
+        li p:hover {
+            background-color: rgba(76, 144, 175, 0.1); /* hafif mavi arkaplan */
+            border-radius: 5px;
+        }
+
+
 
         p.done {
             text-decoration: line-through;
-            color: gray;
+            color: #5e5959;
         }
+
 
         .task-input {
             width: calc(100% - 20px);
@@ -85,7 +98,7 @@
         #deleteButton {
             background-color: #fefefe;
             border-radius: 2px;
-            border: #4c90af solid 1px;
+            border: #ff8da1 solid 1px;
             color: black;
             cursor: pointer;
             font-size: 16px;
@@ -93,7 +106,7 @@
         .delete-button {
             background-color: transparent;
             border: none;
-            color: #d11a2a;
+            color: #61212d;
             font-size: 20px;
             cursor: pointer;
             font-weight: bold;
@@ -105,34 +118,86 @@
         }
 
         #filter-buttons {
+            position: absolute;
+            top: 20px;
+            right: 40px;
             display: flex;
-            justify-content: space-between;
-            margin-top: 20px;
-            gap: 10px;
+            background-color: #ffffff;
+            padding: 10px 12px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            align-items: center;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            gap: 12px;
+            box-sizing: border-box;
+            z-index: 10;
         }
 
         #filter-buttons button {
-            flex: 1;
-            padding: 10px;
+            flex-shrink: 0;
+            padding: 8px 16px;
             border: none;
             border-radius: 8px;
             background-color: #e0e0e0;
             color: #333;
-            font-weight: bold;
+            font-weight: 600;
+            font-size: 14px;
             cursor: pointer;
-            transition: background-color 0.2s ease;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            white-space: nowrap;
         }
 
         #filter-buttons button:hover {
-            background-color: #4c90af;
+            background-color: #ff8da1;
             color: white;
+            transform: scale(1.05);
         }
         .task-input:focus {
             outline: none;
-            border-color: #4c90af;
-            box-shadow: 0 0 5px rgba(76, 144, 175, 0.5);
+            border-color: #ff8da1;
+            box-shadow: 0 0 5px rgb(191, 75, 95);
             transition: 0.2s ease;
         }
+        @media (max-width: 480px) {
+            #filter-buttons {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+        .edit-input {
+            padding: 8px;
+            font-size: 14px;
+            border: 1px solid #4c90af;
+            border-radius: 6px;
+            outline: none;
+            width: 100%;
+            box-shadow: 0 0 4px rgba(76, 144, 175, 0.3);
+        }
+        .tooltip {
+            position: relative;
+        }
+
+        .tooltip::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            top: -30px;
+            left: 0;
+            background-color: #333;
+            color: #fff;
+            padding: 5px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+
+        .tooltip:hover::after {
+            opacity: 1;
+        }
+
 
     </style>
 </head>
@@ -267,26 +332,26 @@
             p.classList.add("done");
         }
 
-        // Paragraf tıklanabilir ve düzenlenebilir hale getiriliyor (başka fonksiyonla)
         enableEdit(p, task);
 
-        // Silme butonu oluşturuluyor
+
         const deleteButton = document.createElement("button");
         deleteButton.classList.add("delete-button");
         deleteButton.textContent = "X";
 
-        // <li> içine <p> ve buton yerleştiriliyor
         li.appendChild(p);
         li.appendChild(deleteButton);
+
         list.prepend(li);
-        // Input kutusu temizleniyor
         taskInput.value = '';
 
-        // Silme işlemi için butona tıklama eventi atanıyor
         deleteButton.addEventListener("click", (event) => {
-            event.stopPropagation(); // <li> tıklamasını engeller
+            event.stopPropagation();
             deleteTask(task);
         });
+        p.classList.add("tooltip");
+        p.setAttribute("data-tooltip", "✏️ double click to edit, click to toggle done");
+
     }
 
     function enableEdit(p, task) {
@@ -294,6 +359,7 @@
         p.addEventListener('click', () => {
             changeTask(task, p);
         });
+
 
         // Çift tıklama: Düzenleme
         p.addEventListener('dblclick', () => {
@@ -355,8 +421,6 @@
             }
         }
     });
-
-
 
 
 
