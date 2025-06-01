@@ -1,39 +1,24 @@
 {
   "data": [
     {
-      "text": "piroz",
-      "done": true,
+      "text": "fsdfsdf",
+      "done": false,
       "id": 1
     },
     {
-      "text": "minel",
-      "done": true,
+      "text": "sdfdsf",
+      "done": false,
       "id": 2
     },
     {
-      "text": "g",
-      "done": true,
+      "text": "dssd",
+      "done": false,
       "id": 3
     },
     {
-      "text": "yuu",
+      "text": "SSDFSDF",
       "done": true,
       "id": 4
-    },
-    {
-      "text": "uhukh",
-      "done": true,
-      "id": 5
-    },
-    {
-      "text": "sdcdssdf",
-      "done": false,
-      "id": 6
-    },
-    {
-      "text": "fsdfsd",
-      "done": false,
-      "id": 7
     }
   ]
 }

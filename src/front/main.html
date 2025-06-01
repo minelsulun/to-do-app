@@ -90,6 +90,50 @@
             cursor: pointer;
             font-size: 16px;
         }
+        .delete-button {
+            background-color: transparent;
+            border: none;
+            color: #d11a2a;
+            font-size: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.1s;
+        }
+
+        .delete-button:hover {
+            transform: scale(1.2);
+        }
+
+        #filter-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            gap: 10px;
+        }
+
+        #filter-buttons button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background-color: #e0e0e0;
+            color: #333;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        #filter-buttons button:hover {
+            background-color: #4c90af;
+            color: white;
+        }
+        .task-input:focus {
+            outline: none;
+            border-color: #4c90af;
+            box-shadow: 0 0 5px rgba(76, 144, 175, 0.5);
+            transition: 0.2s ease;
+        }
+
     </style>
 </head>
 <body>
@@ -101,7 +145,7 @@
 </div>
 
 <div id="filter-buttons">
-    <button id="all-btn">Tüm Görevler</button>
+    <button id="all-btn">ALL TO DO</button>
     <button id="done-btn">DONE</button>
     <button id="undone-btn">WAITING FOR YOU TO DOO</button>
 </div>
@@ -133,7 +177,7 @@
                 console.log("🧾 Listeye eklenecek görev sayısı:", tasks.length);
 
                 tasks.forEach(task => {
-                    console.log("➕ Görev ekleniyor:", task);
+                    console.log("➕ Görev sıralanıyor:", task);
                     addTask(task);
                 });
             })
