@@ -1,121 +1,69 @@
 import express from 'express';
 import cors from 'cors';
-import * as fs from "node:fs";
+import {addTask, deleteTask, getAllTasksQuery, getDoneTasksQuery, getUndoneTasksQuery, updateTask} from "./db/queries";
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-app.get('/mylist', (req, res) => {
-
-    let taskData = fs.readFileSync('./data.json','utf-8');
-    let tasks = JSON.parse(taskData);
-
-    res.json(tasks)
-});
-
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+    console.log(`🚀 Server is running on http://localhost:${PORT}`);
 });
 
+app.get('/mylist', (req, res) => {
+    try {
+        const tasks = getAllTasksQuery();
+        console.log('Görevler:', tasks);
+        res.json({ data: tasks });
+    } catch (error) {
+        console.error('DB hata:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// ➕ Yeni görev ekleme
 app.post('/mylist', (req, res) => {
-    let taskData = fs.readFileSync('./data.json','utf-8');
-    let tasks = JSON.parse(taskData);
+    const { text } = req.body;
+    const result = addTask(text);
+        res.json(result);
+});
 
-    // Assuming req.body contains the new task to be added
-    const newTask = {
-        ...req.body,
-        done: false,  // <-- Burada ekliyoruz
-        id: tasks.data.length +1
-    };
-    // Add the new task to the tasks array
-    tasks.data.push(newTask);
-
-    // Write the updated tasks back to the file
-    fs.writeFileSync('./data.json', JSON.stringify(tasks, null, 2));
-
-    res.status(201).json(newTask);
-})
-
+// ✏️ Görev güncelleme
 app.put('/mylist', (req, res) => {
-    let taskData = fs.readFileSync('./data.json','utf-8');
-    let tasks = JSON.parse(taskData);
+    const { id, text, done } = req.body;
+    const result = updateTask(id, text, done);
 
-    // Assuming req.body contains the updated task
-    const updatedTask = req.body;
-
-    // Find the index of the task to update
-    const index = tasks.data.findIndex((task:{text:string,id:number,done:boolean}) => task.id === updatedTask.id);
-
-    if (index !== -1) {
-        // Update the task
-        tasks.data[index] = updatedTask;
-
-        // Write the updated tasks back to the file
-        fs.writeFileSync('./data.json', JSON.stringify(tasks, null, 2));
-
-        res.json(updatedTask);
-    } else {
-        res.status(404).json({ message: 'Task not found' });
-    }
-})
-
-app.delete('/mylist/:id', (req, res) => {
-    const taskData = fs.readFileSync('./data.json', 'utf-8');
-    const tasks = JSON.parse(taskData);
-
-    const taskId = parseInt(req.params.id); // taskId artık number
-
-    const index = tasks.data.findIndex(task => task.id === taskId);    if (index !== -1) {
-        const deletedTask = tasks.data.splice(index, 1)[0];
-
-        fs.writeFileSync('./data.json', JSON.stringify(tasks, null, 2));
-        res.json(deletedTask);
+    if (result.changes === 1) {
+        res.json({ id, text, done });
     } else {
         res.status(404).json({ message: 'Task not found' });
     }
 });
 
-function updateTask(task) {
-    fetch(`http://localhost:3000/mylist`, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(task)
-    }).then(res => {
-        if (!res.ok) {
-            console.error("Görev güncellenemedi:", res.statusText);
-        }
-    });
-}
+// ✅ Tamamlanan görevleri getir
 app.get('/mylist/done', (req, res) => {
-    let taskData = fs.readFileSync('./data.json', 'utf-8');
-    let tasks = JSON.parse(taskData);
-
-    console.log("📦 Tüm görevler:", tasks); // Tüm görevleri yaz
-
-    const doneTasks: Task[] = tasks.data.filter((task: Task) => task.done === true);
-
-    console.log("✅ Tamamlanan görevler:", doneTasks); // Filtrelenen görevleri yaz
-
-    res.json({ data: doneTasks }); // ✔ frontend ile uyumlu
+    const done = getDoneTasksQuery();
+    res.status(200).json({ data: done });
 });
 
+// ⏳ Tamamlanmamış görevleri getir
 app.get('/mylist/undone', (req, res) => {
-    let taskData = fs.readFileSync('./data.json', 'utf-8');
-    let tasks = JSON.parse(taskData);
-
-    console.log("📦 Tüm görevler:", tasks);
-
-    const undoneTasks: Task[] = tasks.data.filter((task: Task) => task.done === false);
-
-    console.log("⏳ Tamamlanmamış görevler:", undoneTasks);
-
-    res.json({ data: undoneTasks }); // ✔ frontend ile uyumlu
+    const undone = getUndoneTasksQuery();
+    res.status(200).json({ data: undone });
 });
 
 
+// ❌ Görev silme
+app.delete('/mylist/:id', (req, res) => {
+    const id = Number(req.params.id);
+    const result = deleteTask(id);
+
+    if (result.changes === 1) {
+        res.json({ message: 'Task deleted', id });
+    } else {
+        res.status(404).json({ message: 'Task not found' });
+    }
+});
