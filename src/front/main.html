@@ -10,14 +10,14 @@
             margin: 0;
             padding: 0;
             display: flex;
-            justify-content: center;  /* yatayda ortala */
-            align-items: flex-start;  /* üstten hizala */
+            justify-content: center;
+            align-items: flex-start;
             height: 100vh;
             position: relative;
         }
 
         .container {
-            margin-top: 95px; /* üstten biraz boşluk bırak */
+            margin-top: 95px;
             background-color: white;
             padding: 30px;
             border-radius: 12px;
@@ -25,14 +25,12 @@
             width: 400px;
         }
 
-        span{
+        span {
             cursor: pointer;
-            color: red;
             font-weight: bold;
             margin-left: 10px;
-            text-decoration: none !important; /* kesinlikle üstü çizilmesin */
+            text-decoration: none !important;
         }
-
 
         #addButton {
             font-size: 20px;
@@ -70,17 +68,14 @@
         }
 
         li p:hover {
-            background-color: rgba(76, 144, 175, 0.1); /* hafif mavi arkaplan */
+            background-color: rgba(76, 144, 175, 0.1);
             border-radius: 5px;
         }
-
-
 
         p.done {
             text-decoration: line-through;
             color: #5e5959;
         }
-
 
         .task-input {
             width: calc(100% - 20px);
@@ -89,20 +84,14 @@
             border: 1px solid #ccc;
             border-radius: 8px;
         }
+
         #error {
             color: red;
             font-size: 14px;
             margin-top: 10px;
             display: none;
         }
-        #deleteButton {
-            background-color: #fefefe;
-            border-radius: 2px;
-            border: #ff8da1 solid 1px;
-            color: black;
-            cursor: pointer;
-            font-size: 16px;
-        }
+
         .delete-button {
             background-color: transparent;
             border: none;
@@ -127,15 +116,11 @@
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
             align-items: center;
-            flex-direction: row;
-            flex-wrap: nowrap;
             gap: 12px;
-            box-sizing: border-box;
             z-index: 10;
         }
 
         #filter-buttons button {
-            flex-shrink: 0;
             padding: 8px 16px;
             border: none;
             border-radius: 8px;
@@ -145,7 +130,6 @@
             font-size: 14px;
             cursor: pointer;
             transition: background-color 0.2s ease, transform 0.1s ease;
-            white-space: nowrap;
         }
 
         #filter-buttons button:hover {
@@ -153,18 +137,7 @@
             color: white;
             transform: scale(1.05);
         }
-        .task-input:focus {
-            outline: none;
-            border-color: #ff8da1;
-            box-shadow: 0 0 5px rgb(191, 75, 95);
-            transition: 0.2s ease;
-        }
-        @media (max-width: 480px) {
-            #filter-buttons {
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-        }
+
         .edit-input {
             padding: 8px;
             font-size: 14px;
@@ -174,6 +147,7 @@
             width: 100%;
             box-shadow: 0 0 4px rgba(76, 144, 175, 0.3);
         }
+
         .tooltip {
             position: relative;
         }
@@ -198,12 +172,28 @@
             opacity: 1;
         }
 
+        #searchInput::placeholder {
+            color: #aaa;
+            font-style: italic;
+        }
 
+        .priority-label {
+            font-size: 11px;
+            font-weight: bold;
+            margin-left: 10px;
+            text-transform: uppercase;
+        }
     </style>
 </head>
 <body>
 <div class="container">
     <input id="taskInput" class="task-input" placeholder="Yapılacak görevi giriniz">
+    <select id="prioritySelect" class="task-input">
+        <option value="low">Low 🔵</option>
+        <option value="medium" selected>Medium 🟡</option>
+        <option value="high">High 🔴</option>
+    </select>
+    <input id="searchInput" class="task-input" placeholder="Görevlerde ara...">
     <button id="addButton">+</button>
     <ul id="list"></ul>
     <p id="error"></p>
@@ -220,29 +210,20 @@
     const list = document.getElementById('list');
     const addButton = document.getElementById('addButton');
     const taskInput = document.getElementById('taskInput');
+    const prioritySelect = document.getElementById('prioritySelect');
     const error = document.getElementById('error');
-
 
     function clearTaskList() {
         list.innerHTML = "";
     }
-    function fetchAndDisplayTasks(endpoint) {
-        console.log(`📡 İstek atılıyor: ${endpoint}`);
 
+    function fetchAndDisplayTasks(endpoint) {
         fetch(endpoint)
             .then(res => res.json())
             .then(result => {
-                console.log("🔁 Gelen cevap:", result);
-
                 clearTaskList();
-
-                // Gelen veri dizi mi yoksa { data: [...] } objesi mi?
                 const tasks = Array.isArray(result) ? result : result.data;
-
-                console.log("🧾 Listeye eklenecek görev sayısı:", tasks.length);
-
                 tasks.forEach(task => {
-                    console.log("➕ Görev sıralanıyor:", task);
                     addTask(task);
                 });
             })
@@ -250,118 +231,95 @@
                 console.error("❌ Hata:", err);
             });
     }
+
     document.getElementById("all-btn").addEventListener("click", () => {
         fetchAndDisplayTasks(`${API_BASE_URL}/mylist`);
     });
+
     document.getElementById("done-btn").addEventListener("click", () => {
-        console.log('Fetching done tasks...');
         fetchAndDisplayTasks(`${API_BASE_URL}/mylist/done`);
     });
+
     document.getElementById("undone-btn").addEventListener("click", () => {
         fetchAndDisplayTasks(`${API_BASE_URL}/mylist/undone`);
     });
 
     fetch(`${API_BASE_URL}/mylist`)
-        .then(res => {
-            if (res.status !== 200) {
-                console.log('fetch error', res);
-                return;
-            }
-            return res.json()
-        })
+        .then(res => res.json())
         .then(json => {
-            json = json.data;
-            json.forEach(task => {
-                addTask(task);
-            });
+            const tasks = json.data;
+            tasks.forEach(task => addTask(task));
         });
 
     addButton.addEventListener('click', () => {
         const taskText = taskInput.value.trim();
+        const priority = prioritySelect.value;
         error.style.display = 'none';
 
         if (taskText) {
-            fetch('http://localhost:3000/mylist', {
+            fetch(`${API_BASE_URL}/mylist`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ text: taskText })
-            }).then(response => {
-                if(response.status === 201){
-                    response.json().then(data => {
-                        addTask(data);
-                    })
-                }else{
-                    error.innerText = response.statusText;
-                    error.style.display = 'block';
-                }
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: taskText, priority })
             })
-
+                .then(response => response.json())
+                .then(data => {
+                    addTask(data);
+                });
         }
     });
 
-    function changeTask(task,p){
+    function changeTask(task, p) {
         task.done = !task.done;
-        fetch(`http://localhost:3000/mylist`, {
+        fetch(`${API_BASE_URL}/mylist`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(task)
         }).then(response => {
             if (response.status === 200) {
                 p.classList.toggle("done");
-            } else {
-                console.error('Error updating task:', response.statusText);
             }
         });
     }
 
     function addTask(task) {
-        // <li> elementi oluşturuluyor ve görev id'si atanıyor
         const li = document.createElement("li");
         li.id = task.id;
 
-        // <p> elementi görev metnini içeriyor
         const p = document.createElement("p");
         p.textContent = task.text;
+        if (task.done) p.classList.add("done");
 
-        // Eğer görev tamamlanmışsa "done" sınıfı ekleniyor (stil için)
-        if (task.done) {
-            p.classList.add("done");
-        }
+        p.classList.add("tooltip");
+        p.setAttribute("data-tooltip", "✏️ double click to edit, click to toggle done");
 
         enableEdit(p, task);
 
+        const priorityLabel = document.createElement("span");
+        priorityLabel.classList.add("priority-label");
+        priorityLabel.textContent = task.priority?.toUpperCase() || "MEDIUM";
+        if (task.priority === "high") priorityLabel.style.color = "red";
+        else if (task.priority === "medium") priorityLabel.style.color = "orange";
+        else priorityLabel.style.color = "blue";
 
         const deleteButton = document.createElement("button");
         deleteButton.classList.add("delete-button");
         deleteButton.textContent = "X";
+        deleteButton.addEventListener("click", e => {
+            e.stopPropagation();
+            deleteTask(task);
+        });
 
         li.appendChild(p);
+        li.appendChild(priorityLabel);
         li.appendChild(deleteButton);
 
         list.prepend(li);
         taskInput.value = '';
-
-        deleteButton.addEventListener("click", (event) => {
-            event.stopPropagation();
-            deleteTask(task);
-        });
-        p.classList.add("tooltip");
-        p.setAttribute("data-tooltip", "✏️ double click to edit, click to toggle done");
-
     }
 
     function enableEdit(p, task) {
-        // Tek tıklama: Üstünü çizme
-        p.addEventListener('click', () => {
-            changeTask(task, p);
-        });
-
-
-        // Çift tıklama: Düzenleme
+        p.addEventListener('click', () => changeTask(task, p));
         p.addEventListener('dblclick', () => {
             const input = document.createElement('input');
             input.type = 'text';
@@ -371,7 +329,7 @@
             p.replaceWith(input);
             input.focus();
 
-            input.addEventListener('keydown', (e) => {
+            input.addEventListener('keydown', e => {
                 if (e.key === 'Enter') {
                     const newText = input.value.trim();
                     if (newText !== '') {
@@ -381,8 +339,11 @@
                         newP.textContent = newText;
                         if (task.done) newP.classList.add("done");
 
+                        newP.classList.add("tooltip");
+                        newP.setAttribute("data-tooltip", "✏️ double click to edit, click to toggle done");
+
                         input.replaceWith(newP);
-                        enableEdit(newP, task); // ✅ Yeni p’ye tıklama ve düzenleme ekle
+                        enableEdit(newP, task);
                         updateTask(task);
                     }
                 }
@@ -390,41 +351,30 @@
         });
     }
 
-    function deleteTask(task) {
-        fetch(`http://localhost:3000/mylist/${task.id}`, {
-            method: 'DELETE'
-        }).then(response => {
-            if (response.status === 200) {
-                const li = document.getElementById(task.id);
-                li.remove();
-            } else {
-                error.textContent='Error deleting task:'+ response.statusText;
-            }
+    function updateTask(task) {
+        fetch(`${API_BASE_URL}/mylist`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(task)
         });
     }
 
-    taskInput.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") {
-            const taskText = taskInput.value.trim();
-            if (taskText !== '') {
-                fetch('http://localhost:3000/mylist', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ text: taskText })
-                })
-                    .then(response => response.json())
-                    .then(newTask => {
-                        addTask(newTask);
-                    });
-            }
-        }
+    function deleteTask(task) {
+        fetch(`${API_BASE_URL}/mylist/${task.id}`, { method: 'DELETE' })
+            .then(response => {
+                if (response.status === 200) {
+                    const li = document.getElementById(task.id);
+                    if (li) li.remove();
+                }
+            });
+    }
+
+    const searchInput = document.getElementById("searchInput");
+    searchInput.addEventListener("input", () => {
+        const searchTerm = searchInput.value.trim();
+        const query = searchTerm ? `?search=${encodeURIComponent(searchTerm)}` : '';
+        fetchAndDisplayTasks(`${API_BASE_URL}/mylist${query}`);
     });
-
-
-
-
 </script>
 </body>
 </html>
